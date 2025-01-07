@@ -180,19 +180,22 @@
             const {content, source} = data;
             const element = {content, source};
             // Name is the first valid line
-            const lines = source[0].split('\n');
-            for(let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (line === '') continue;
-                if (line.startsWith('```')) continue;
-                if (line.startsWith('--')) continue;
-                if (line.toLowerCase() === '(function)') continue;
-                if (line.length > 100) {
-                    element.name = line.substring(0, 100) + '...';
-                } else {
-                    element.name = line;
+            for (let i = 0; i < source.length; i++) {
+                const lines = source[i].split('\n');
+                for(let j = 0; j < lines.length; j++) {
+                    const line = lines[j].trim();
+                    if (line === '') continue;
+                    if (line.startsWith('```')) continue;
+                    if (line.startsWith('--')) continue;
+                    if (line.toLowerCase() === '(function)') continue;
+                    if (line.length > 100) {
+                        element.name = line.substring(0, 100) + '...';
+                    } else {
+                        element.name = line;
+                    }
+                    break;
                 }
-                break;
+                if (element.name) break;
             }
             if (!element.name) {
                 element.name = 'Untitled';

@@ -135,9 +135,9 @@ export function activate(context: vscode.ExtensionContext) {
 			// --- Render Markdown ---
 			mdList = mdList.map(md => md.trim())
 			if (mdList.length === 0) return;
-			const html = await this.renderMarkdown(mdList);
+			const [html, finalMdList] = await this.renderMarkdown(mdList);
 			// --- Send to Webview ---
-			this.webview.postMessage({ type: 'current', content: html, source: mdList });
+			this.webview.postMessage({ type: 'current', content: html, source: finalMdList });
 			this.firstLoad = false;
 		}
 
@@ -184,6 +184,7 @@ export function activate(context: vscode.ExtensionContext) {
 		public async renderMarkdown(mdList: string[]) {
 			if (!this.mit) await this.initShiki(this.themeClass);
 			let html: string = '';
+			let source: string[] = [];
 			for (let i = 0; i < mdList.length; i++) {
 				while (html.endsWith('<hr>')) {
 					html = html.slice(0, -4);
@@ -192,6 +193,7 @@ export function activate(context: vscode.ExtensionContext) {
 				if (checkStop(mdList[i])) continue;
 				const newHtml = this.mit.render(mdList[i]);
 				if (checkStop(newHtml, true)) continue;
+				source.push(mdList[i]);
 				html += newHtml;
 				// python doc special case
 				html = html.replace(/&lt;!--moduleHash:-{0,1}\d+--&gt;/g, '');
@@ -206,7 +208,7 @@ export function activate(context: vscode.ExtensionContext) {
 				html = html.trim();
 			}
 			html = cleanLinefeedsOutsidePre(html);
-			return html;
+			return [html, source];
 		}
 
 		public async rerenderSavedPinnedElements() {
