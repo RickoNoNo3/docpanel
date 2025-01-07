@@ -13,10 +13,8 @@ Dive in and let your code speak for itself.
 ![example](./example.jpg)
 
 > Best Practices: Move the panel to the secondary side bar (on the right often), and pin your docs when you need them.
-
-## Requirements
-
-This extension requires some programming language extensions that support hover requests to get documentation for symbols under the pointer.
+>
+> This extension requires some programming language extensions that support hover requests to get documentation for symbols under the pointer.
 
 ## Settings and Commands
 
@@ -40,9 +38,8 @@ And the following commands:
 ![example](./example.jpg)
 
 > 最佳实践：将面板移动到辅助侧栏（通常在右侧），并在需要的时候固定你的文档。
-
-## 使用要求
-此插件需要与另一些支持鼠标悬停文档的编程语言插件配合使用（并将其鼠标悬停功能转化为由键盘光标位置触发），以获取对应符号的文档。如：Google的Go插件、微软的Python插件等。基本都是在 VSCode 中编写对应语言代码所必需的插件，因此并无额外的负担。
+>
+> 此插件需要与另一些支持鼠标悬停文档的编程语言插件配合使用（并将其鼠标悬停功能转化为由键盘光标位置触发），以获取对应符号的文档。如：Google的Go插件、微软的Python插件等。基本都是在 VSCode 中编写对应语言代码所必需的插件，因此并无额外的负担。
 
 ## 设置和命令
 此插件提供以下设置项:
