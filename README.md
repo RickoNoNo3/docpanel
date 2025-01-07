@@ -41,23 +41,3 @@ And the following commands:
 > 最佳实践：将面板移动到辅助侧栏（通常在右侧），并在需要的时候固定你的文档。
 >
 > 此插件需要与另一些支持鼠标悬停文档的编程语言插件配合使用（并将其鼠标悬停功能转化为由键盘光标位置触发），以获取对应符号的文档。如：Google的Go插件、微软的Python插件等。基本都是在 VSCode 中编写对应语言代码所必需的插件，因此并无额外的负担。
-
---- 
-
-# Release Notes
-
-## 1.0.0
-
-Initial release of Doc Panel for Go
-
-## 1.0.1
-
-Covered more languages
-
-## 1.0.2
-
-Added Logo
-
-## 1.0.3
-
-Updated stop words, added Logo.

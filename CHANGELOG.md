@@ -1,9 +1,17 @@
 # Change Log
 
-All notable changes to the "godoc-panel" extension will be documented in this file.
+## 1.0.0
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+Initial release of Doc Panel for Go
 
-## [Unreleased]
+## 1.0.1
 
-- Initial release
+Covered more languages
+
+## 1.0.2
+
+Added Logo
+
+## 1.0.3
+
+Updated stop words, added Logo.
