@@ -1,71 +1,66 @@
-# godoc-panel README
+# Doc Panel
 
-This is the README for your extension "godoc-panel". After writing up a brief description, we recommend including the following sections.
+Dive in and let your code speak for itself.
+
+[（中文）](#Chinese)
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **From Pointer to Cursor**. Replace *Pointer Hovering as Doc* with *Cursor Position as Doc*, reducing mouse movements and keeping your workflow uninterrupted, especially ideal for key-mappings like Vim!
+- **Pin Your Docs, Own Your Flow**. Pin key docs and switch between real-time preview and pinned views, keeping your context anchored where you need it most.
+- **Broad Language Support**. Fully tested on GoDoc, JsDoc, and PyDoc, and compatible with any programming language with a language server.
 
-For example if there is an image subfolder under your extension project workspace:
+![example](./example.jpg)
 
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+> Best Practices: Move the panel to the secondary side bar (on the right often), and pin your docs when you need them.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+This extension requires some programming language extensions that support hover requests to get documentation for symbols under the pointer.
 
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
+## Settings and Commands
 
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+* `docpanel.codeWrapping`: Wrap code blocks in the panel, set to `false` may cause the panel scrollable on X-asix, and the line arrangement will be kept.
 
-## Known Issues
+And the following commands:
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+* `docpanel.refresh-active-doc`: Refresh the active document panel.
 
 ---
 
-## Following extension guidelines
+# Chinese
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+## 功能特性
+- **键盘而非鼠标**。根据键盘光标位置直接获得文档，无需鼠标悬停，让编码顺畅无阻。尤其适合与 Vim 插件配合使用！（当然也可以独立使用）
+- **固定并灵活切换文档**。固定重要文档，在实时预览与固定视图间无缝切换，随时参考。
+- **广泛的语言支持**。已在 GoDoc、JsDoc 和 PyDoc 上全面测试，并且兼容任何有 Language Server 的编程语言。
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+![example](./example.jpg)
 
-## Working with Markdown
+> 最佳实践：将面板移动到辅助侧栏（通常在右侧），并在需要的时候固定你的文档。
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+## 使用要求
+此插件需要与另一些支持鼠标悬停文档的编程语言插件配合使用（并将其鼠标悬停功能转化为由键盘光标位置触发），以获取对应符号的文档。如：Google的Go插件、微软的Python插件等。基本都是在 VSCode 中编写对应语言代码所必需的插件，因此并无额外的负担。
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+## 设置和命令
+此插件提供以下设置项:
 
-## For more information
+* `docpanel.codeWrapping`: 是否对代码块进行自动换行，设置为 `false` 可能会导致面板在 X 轴滚动，但可以保持行的原始观感。
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+以及以下命令：
 
-**Enjoy!**
+* `docpanel.refresh-active-doc`: 手动刷新当前文档面板（并切换到实时模式）。
+
+--- 
+
+# Release Notes
+
+### 1.0.0
+
+Initial release of Doc Panel for Go
+
+### 1.0.1
+
+Covered more languages

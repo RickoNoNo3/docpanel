@@ -2,6 +2,10 @@
   "name": "docpanel",
   "displayName": "Doc Panel",
   "description": "A panel to show and pin GoDoc, PyDoc, JsDoc... for symbols under your caret. Tested on Go Doc, Python Comments, and JavaScript Docs, but should works with any languages with a language server.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rickonono3/docpanel"
+  },
   "publisher": "rickonono3",
   "version": "1.0.1",
   "engines": {
