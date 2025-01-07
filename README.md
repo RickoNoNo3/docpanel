@@ -57,10 +57,10 @@ And the following commands:
 
 # Release Notes
 
-### 1.0.0
+## 1.0.0
 
 Initial release of Doc Panel for Go
 
-### 1.0.1
+## 1.0.1
 
 Covered more languages
