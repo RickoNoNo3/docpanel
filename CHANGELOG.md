@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.0.6
+Fixed `workspaceState`
+
 ## 1.0.5
 Fixed titling problems of stop words.
 
