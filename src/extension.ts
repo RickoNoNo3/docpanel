@@ -51,6 +51,7 @@ export function activate(context: vscode.ExtensionContext) {
 		public firstLoad = true;
 		private mit: any;
 		private shiki: any;
+		private rendererLoaded: boolean = false;
 
 		constructor(
 			private readonly extensionUri: vscode.Uri,
@@ -77,6 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
 			// 		dark: 'dark-plus',
 			// 	},
 			// }))
+			this.rendererLoaded = true;
 		}
 
 		public resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext, token: vscode.CancellationToken): Thenable<void> | void {
@@ -178,11 +180,14 @@ export function activate(context: vscode.ExtensionContext) {
 					'codeWrapping': config('codeWrapping') ? 'codeWrapping' : '',
 				},
 			)
+			this.rendererLoaded = false;
 			this.initShiki(themeClass);
 		}
 
 		public async renderMarkdown(mdList: string[]) {
-			if (!this.mit) await this.initShiki(this.themeClass);
+			await this.waitForRenderer();
+			if (!this.mit || !this.rendererLoaded)
+				await this.initShiki(this.themeClass);
 			let html: string = '';
 			let source: string[] = [];
 			for (let i = 0; i < mdList.length; i++) {
@@ -213,14 +218,31 @@ export function activate(context: vscode.ExtensionContext) {
 
 		public async rerenderSavedPinnedElements() {
 			if (!this.webview) return;
-			if (!this.savedPinnedElements) {
+			if (!this.savedPinnedElements || this.savedPinnedElements.length === 0) {
 				this.savedPinnedElements = this.context.workspaceState.get('pinnedElements') ?? [];
 			}
 			for (let i = 0; i < this.savedPinnedElements.length; i++) {
 				const ele = this.savedPinnedElements[i];
-				ele.content = await this.renderMarkdown(ele.source);
+				[ele.content, ele.source] = await this.renderMarkdown(ele.source);
 			}
 			this.context.workspaceState.update('pinnedElements', this.savedPinnedElements);
+		}
+
+		public waitForRenderer(timeoutS: number = 10): Promise<boolean> {
+			return new Promise((resolve, reject) => {
+				const timeout = Math.round(timeoutS) * 1000;
+				const start = Date.now();
+				const timer = setInterval(() => {
+					const end = Date.now();
+					if (end - start > timeout) {
+						clearInterval(timer);
+						resolve(this.rendererLoaded);
+					} else if (this.rendererLoaded) {
+						clearInterval(timer);
+						resolve(true);
+					}
+				}, 500)
+			})
 		}
 
 	})(context.extensionUri, context, 'docpanel');
