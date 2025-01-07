@@ -32,7 +32,7 @@
       "explorer": [
         {
           "type": "webview",
-          "contextualTitle": "Doc Panel",
+          "contextualTitle": "Extension",
           "id": "docpanel",
           "name": "Doc Panel",
           "visibility": "visible",

@@ -1,4 +1,7 @@
 # Change Log
+## 1.0.8
+Updated `contextualTitle`
+
 ## 1.0.7
 Fixed `pinnedElements`
 
