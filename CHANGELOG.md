@@ -1,4 +1,6 @@
 # Change Log
+## 1.0.7
+Fixed `pinnedElements`
 
 ## 1.0.6
 Fixed `workspaceState`
