@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>GoDoc Panel</title>
+    <link rel="stylesheet" href="{{file:style.css}}">
+</head>
+<template id="pinned-item-template">
+    <li>
+        <div class="item-indicator in-li">
+            <div></div><div></div>
+        </div>
+        <div class="button-basic pinned-item">
+            <span class="item-name"></span>
+            <div class="close">×</div>
+        </div>
+    </li>
+</template>
+<body class="{{theme}} {{codeWrapping}}">
+    <div id="top-bar">
+        <div id="active-button" class="button-basic active">Active</div>
+        <div id="pinned-button" class="button-basic">+&nbsp;Pin</div>
+    </div>
+    <ul id="pinned-list">
+    </ul>
+    <div class="item-indicator">
+        <div></div><div></div>
+    </div>
+    <main>
+    </main>
+    <script>
+        let vscode, activeBtn, addPinnedBtn, pinnedUl, main;
+        let pinnedElements = [];
+        let currentElement = null;
+        let currentElement_active = null;
+        let status = 'active';
+
+        function setCurrentElement(ele, st) {
+            currentElement = ele;
+            status = st || 'active';
+            renderDoc();
+        }
+
+        window.onload = () => {
+            vscode = acquireVsCodeApi();
+            activeBtn = document.getElementById('active-button');
+            addPinnedBtn = document.getElementById('pinned-button');
+            pinnedUl = document.getElementById('pinned-list');
+            main = document.getElementsByTagName('main')[0];
+
+            activeBtn.addEventListener('click', () => changeToActive());
+            addPinnedBtn.addEventListener('click', () => addPinnedElement());
+            
+            window.addEventListener('message', messageHandler);
+
+            vscode.postMessage({ type: 'ready' });
+
+            renderDoc();
+        }
+
+        function changeToActive() {
+            Array.from(document.getElementsByClassName('button-basic')).forEach(btn => btn.classList.remove('active'));
+            Array.from(pinnedUl.children).forEach(li => {
+                li.classList.remove('active');
+                li.classList.remove('skip');
+            });
+            activeBtn.classList.add('active');
+            setCurrentElement(currentElement_active, 'active');
+        }
+
+        function addPinnedElement(element = null, justLoad = false) {
+            if (!element) element = currentElement_active;
+            if (!element) return;
+            const ele = {...element};
+
+
+            const idx = pinnedElements.findIndex(el => el.name === ele.name);
+            if (idx === -1) {
+                const pinnedLi = document.getElementById('pinned-item-template').content.cloneNode(true).children[0];
+                pinnedLi.getElementsByClassName('item-name')[0].innerText = ele.name;
+                pinnedLi.addEventListener('click', (e) => {
+                    console.log('hello1');
+                    renderPinnedDoc(ele.name);
+                });
+                pinnedLi.getElementsByClassName('close')[0].addEventListener('click', (e) => {
+                    console.log('hello2');
+                    removePinnedElement(ele.name);
+                    e.stopPropagation();
+                    return false;
+                });
+                pinnedUl.appendChild(pinnedLi);
+                pinnedElements.push(ele);
+            } else {
+                if (currentElement === pinnedElements[idx]) {
+                    pinnedElements[idx] = ele;
+                    renderPinnedDoc(ele.name);
+                } else {
+                    pinnedElements[idx] = ele;
+                }
+            }
+
+            if (!justLoad) {
+                savePinnedElements();
+            }
+        }
+
+        function removePinnedElement(name) {
+            const idx = pinnedElements.findIndex(el => el.name === name);
+            if (idx === -1) return;
+            if (currentElement === pinnedElements[idx]) {
+                changeToActive();
+            }
+
+            pinnedElements.splice(idx, 1);
+            pinnedUl.removeChild(pinnedUl.children[idx]);
+
+            savePinnedElements();
+        }
+
+        function savePinnedElements() {
+            vscode.postMessage({ type: 'savePinned', elements: pinnedElements });
+        }
+
+        function renderPinnedDoc(name) {
+            if (pinnedElements.length !== pinnedUl.children.length) {
+                main.innerHTML = 'ERROR';
+                throw 'panic: pinnedElements.length !== pinnedUl.children.length';
+            }
+            const idx = pinnedElements.findIndex(el => el.name === name);
+            if (idx === -1) {
+                main.innerHTML = 'ERROR';
+                throw 'panic: pinnedElements idx === -1';
+            }
+            const li = pinnedUl.children[idx];
+            Array.from(pinnedUl.children).forEach((l, i) => {
+                if (i < idx) {
+                    l.classList.add('skip');
+                } else {
+                    l.classList.remove('skip');
+                }
+                l.classList.remove('active');
+            });
+            li.classList.add('active');
+
+            const liItem = li.getElementsByClassName('pinned-item')[0];
+            Array.from(document.getElementsByClassName('button-basic')).forEach(btn => btn.classList.remove('active'));
+            liItem.classList.add('active');
+            
+            setCurrentElement(pinnedElements[idx], 'pinned');
+        }
+
+        function renderDoc() {
+            if (currentElement) {
+                main.innerHTML = currentElement.content;
+            } else {
+                main.innerHTML = '<center>Waiting for language server...</center>';
+            }
+        }
+
+        function messageHandler(event) {
+            const data = event.data;
+            if (data.type === 'loadPinned') {
+                changeToActive();
+                pinnedElements = [];
+                for(let el of data.elements) {
+                    addPinnedElement(el, true);
+                }
+            } else if (data.type === 'current') {
+                const element = buildElement(data);
+                currentElement_active = element;
+                if (status === 'active') {
+                   setCurrentElement(currentElement_active, 'active');
+                }
+            }
+        }
+
+        function buildElement(data) {
+            const {content, source} = data;
+            const element = {content, source};
+            // Name is the first valid line
+            const lines = source[0].split('\n');
+            for(let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line === '') continue;
+                if (line.startsWith('```')) continue;
+                if (line.startsWith('--')) continue;
+                if (line.toLowerCase() === '(function)') continue;
+                if (line.length > 100) {
+                    element.name = line.substring(0, 100) + '...';
+                } else {
+                    element.name = line;
+                }
+                break;
+            }
+            if (!element.name) {
+                element.name = 'Untitled';
+            }
+            return element;
+        }
+    </script>
+</body>
+</html>
