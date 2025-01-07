@@ -21,6 +21,7 @@ Dive in and let your code speak for itself.
 This extension contributes the following settings:
 
 * `docpanel.codeWrapping`: Wrap code blocks in the panel, set to `false` may cause the panel scrollable on X-asix, and the line arrangement will be kept.
+* `docpanel.showDiagnostics`: Show diagnostics of the current position in the panel, set to `true` to get more detailed real-time information, but may cause a bad documentation experience.
 
 And the following commands:
 
@@ -41,15 +42,6 @@ And the following commands:
 >
 > 此插件需要与另一些支持鼠标悬停文档的编程语言插件配合使用（并将其鼠标悬停功能转化为由键盘光标位置触发），以获取对应符号的文档。如：Google的Go插件、微软的Python插件等。基本都是在 VSCode 中编写对应语言代码所必需的插件，因此并无额外的负担。
 
-## 设置和命令
-此插件提供以下设置项:
-
-* `docpanel.codeWrapping`: 是否对代码块进行自动换行，设置为 `false` 可能会导致面板在 X 轴滚动，但可以保持行的原始观感。
-
-以及以下命令：
-
-* `docpanel.refresh-active-doc`: 手动刷新当前文档面板（并切换到实时模式）。
-
 --- 
 
 # Release Notes
@@ -64,4 +56,8 @@ Covered more languages
 
 ## 1.0.2
 
-Added logo
+Added Logo
+
+## 1.0.3
+
+Updated stop words, added Logo.

@@ -8,7 +8,7 @@
   },
   "icon": "icon.png",
   "publisher": "rickonono3",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -48,6 +48,12 @@
           "type": "boolean",
           "default": false,
           "description": "Wrap code blocks in the panel, set to `false` may cause the panel scrollable on X-asix, and the line arrangement will be kept."
+        },
+        "docpanel.showDiagnostics": {
+          "title": "Show Diagnostics",
+          "type": "boolean",
+          "default": false,
+          "description": "Show diagnostics of the current position in the panel, set to `true` to get more detailed real-time information, but may cause a bad documentation experience."
         }
       }
     }
