@@ -47,7 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const provider = new (class implements vscode.WebviewViewProvider {
 		public webview: vscode.Webview | undefined;
 		public themeClass: 'light' | 'dark' = 'light';
-		public savedPinnedElements: any[] = [];
+		public savedPinnedElements: any[] | null = null;
 		public firstLoad = true;
 		private mit: any;
 		private shiki: any;
@@ -213,6 +213,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 		public async rerenderSavedPinnedElements() {
 			if (!this.webview) return;
+			if (!this.savedPinnedElements) {
+				this.savedPinnedElements = this.context.workspaceState.get('pinnedElements') ?? [];
+			}
 			for (let i = 0; i < this.savedPinnedElements.length; i++) {
 				const ele = this.savedPinnedElements[i];
 				ele.content = await this.renderMarkdown(ele.source);
