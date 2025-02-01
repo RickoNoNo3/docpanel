@@ -61,9 +61,8 @@ export function activate(context: vscode.ExtensionContext) {
 		) { }
 
 		private async initShiki(themeClass: 'light' | 'dark') {
-			this.mit = (await import('markdown-it')).default({
-				breaks: true,
-			});
+			// this.mit = (await import('markdown-it')).default({breaks: true});
+			this.mit = (await import('markdown-it')).default('commonmark');
 			this.shiki = (await import('@shikijs/markdown-it')).default;
 			const shikimit = await this.shiki({
 				theme: {
@@ -196,26 +195,20 @@ export function activate(context: vscode.ExtensionContext) {
 			for (let i = 0; i < mdList.length; i++) {
 				while (html.endsWith('<hr>')) {
 					html = html.slice(0, -4);
-					html = html.trim();
 				}
 				if (checkStop(mdList[i])) continue;
-				const newHtml = this.mit.render(mdList[i]);
+				let newHtml = this.mit.render(mdList[i]);
 				if (checkStop(newHtml, true)) continue;
-				console.log(mdList[i], newHtml);
 				source.push(mdList[i]);
+				// python/js doc special cases
+				console.log('BEFORE', newHtml);
+				newHtml = pProcess(newHtml);
+				console.log('AFTER', newHtml);
+				newHtml = newHtml.replace(/&lt;!--moduleHash:-{0,1}\d+--&gt;/g, '');
+				// redundant lines
+				newHtml = newHtml.replace(/<p>(\s*|\u00A0|\n|&nbsp;|&emsp;)*<\/p>/g, '');
+				newHtml = newHtml.trim();
 				html += newHtml;
-				// python doc special case
-				html = html.replace(/&lt;!--moduleHash:-{0,1}\d+--&gt;/g, '');
-				const doc = new JSDOM(`<wrapper>${html}</wrapper>`).window.document;
-				doc.body.querySelectorAll('*:not(pre):not(code):not(pre *):not(code *)').forEach(element => {
-					// js doc line breaks special case
-					element.innerHTML = element.innerHTML.replace(/<br\s*\/?>/g, ' ');
-					// redundants
-					element.innerHTML = element.innerHTML.replace(/<p>\s*<\/p>/g, '');
-					element.innerHTML = element.innerHTML.trim();
-				});
-				html = doc.body.innerHTML.replace(/<\/?wrapper>/g, '');
-				html = html.trim();
 				if (i < mdList.length - 1)
 					html += '<hr>';
 			}
@@ -390,4 +383,162 @@ function updateAvailability() {
 
 	// --- Set Context Key ---
 	vscode.commands.executeCommand('setContext', 'docpanel.showView', available);
+}
+
+/**
+ * 规则：
+ * 首先记录目标文档中换行符的格式，然后将所有的换行符替换为\n，最终结果中根据记录的格式将\n替换为目标文档中的换行符格式
+ * 0. 若遇到<(pre|code).*?>，则压入栈中，若遇到</(pre|code)>，则弹出一个。当且仅当栈为空时，执行除0号规则外的下述规则。
+ * 1. 若<br\s*\/?>后为行尾，则删除换行，直到该br后存在字符
+ * 2. 若<br\s*\/?>后跟至少两个空格或两个`&nbsp;`，则该br不做处理
+ * 3. 若<br\s*\/?>后跟至少一个`&emsp;`，则该br不做处理
+ * 4. 若<br\s*\/?>后的两个字符是`</`，则删除该br
+ * 5. 若若干个<br\s*\/?>连续出现（忽略空格和换行和`&nbsp;`和`&emsp;`），则只保留最前面一个
+ * 6. 若<br\s*\/?>后跟其他字符，则将该br替换为一个可换行空格
+ * @param html 未处理的html string
+ */
+function brProcess(html: string) {
+	const preBegStrs = ['<pre', '<code', '<script', '<style'];
+	const preBegRegex = /<(pre|code|script|style).*?>/i;
+	const preEndStr = ['</pre>', '</code>', '</script>', '</style>'];
+	const brStr = '<br';
+	const brRegex = /<br\s*\/?>/ig;
+	const isPreBeg = (str: string) => {
+		// explain:
+		// If the string starts with a preBegStr, then it may be a pre tag,
+		// so we further check if it is a pre tag by using preBegRegex.
+		// If the matched tag is the start of the string, then it is a pre tag.
+		// Otherwise, it is not a pre tag.
+		if (preBegStrs.some(s => str.startsWith(s))) {
+			const match = preBegRegex.exec(str);
+			if (match) {
+				const tag = match[0];
+				return str.startsWith(tag);
+			}
+		}
+		return false;
+	};
+	const isPreEnd = (str: string) => {
+		return preEndStr.some(s => str.startsWith(s));
+	};
+	const getBrLength = (str: string) => {
+		if (str.startsWith(brStr)) {
+			const match = brRegex.exec(str);
+			if (match) {
+				const tag = match[0];
+				if (str.startsWith(tag)) {
+					return tag.length;
+				}
+			}
+		}
+		return -1;
+	};
+
+	let preStack: number[] = [];
+	let oldHtml = html, newHtml = '';
+
+	// Record the linefeed format of the target document
+	// then replace all linefeeds with '\n'
+	let linefeedFormat: string = '\n';
+	if (html.includes('\r\n')) {
+		linefeedFormat = '\r\n';
+	} else if (html.includes('\n\r')) {
+		linefeedFormat = '\n\r';
+	} else if (html.includes('\r') && !html.includes('\n')) {
+		linefeedFormat = '\r';
+	}
+	oldHtml = oldHtml.replace(/\r\n/g, '\n');
+	oldHtml = oldHtml.replace(/\n\r/g, '\n');
+	oldHtml = oldHtml.replace(/\r/g, '\n');
+
+	let i = 0;
+	while (i < oldHtml.length) {
+		const remains = oldHtml.slice(i);
+		if (isPreBeg(remains)) {
+			preStack.push(i);
+		} else if (isPreEnd(remains)) {
+			preStack.pop();
+		} else if (preStack.length === 0) {
+			const brLength = getBrLength(remains);
+			if (brLength !== -1) {
+				// 1. 若<br\s*\/?>后为行尾，则删除换行，直到该br后存在字符
+				let removedLinefeeds = 0;
+				while (remains[brLength + removedLinefeeds] === '\n') {
+					removedLinefeeds++;
+				}
+				let cutRemains = remains;
+				if (removedLinefeeds !== 0) {
+					cutRemains = remains.slice(0, brLength) + remains.slice(brLength + removedLinefeeds);
+					oldHtml = oldHtml.slice(0, i) + cutRemains;
+				}
+
+				let afterBrRemains = cutRemains.slice(brLength);
+
+				let op : 'rm' | 'keep' | 'sp' | null = null;
+				// 2. 若<br\s*\/?>后跟至少两个空格或两个`&nbsp;`，则该br不做处理
+				if (afterBrRemains.startsWith('  ') || afterBrRemains.startsWith('\u00A0\u00A0') || afterBrRemains.startsWith('&nbsp;&nbsp;')) {
+					op = 'keep';
+				}
+				// 3. 若<br\s*\/?>后跟至少一个`&emsp;`，则该br不做处理
+				else if (afterBrRemains.startsWith('\t') || afterBrRemains.startsWith('&emsp;')) {
+					op = 'keep';
+				}
+				// 4. 若<br\s*\/?>后的两个字符是`</`，则删除该br
+				else if (afterBrRemains.startsWith('</')) {
+					op = 'rm';
+				}
+				// 5. 若若干个<br\s*\/?>连续出现（忽略空格和换行和`&nbsp;`和`&emsp;`），则只保留最前面一个(keep)
+				else if (getBrLength(afterBrRemains) !== -1) {
+					op = 'keep';
+					const allBrsRegex = /^(<br\s*\/?>(\s*|\u00A0|\n|&nbsp;|&emsp;)*)+/g;
+					const match = allBrsRegex.exec(afterBrRemains);
+					if (match) {
+						oldHtml = oldHtml.slice(0, i + brLength) + afterBrRemains.slice(match[0].length);
+					}
+				}
+				// 6. 若<br\s*\/?>后跟其他字符，则将该br替换为一个可换行空格
+				else {
+					op = 'sp';
+				}
+
+				switch (op) {
+					case 'rm':
+						oldHtml = oldHtml.slice(0, i) + afterBrRemains;
+						break;
+					case 'keep':
+						break;
+					case 'sp':
+					default:
+						oldHtml = oldHtml.slice(0, i) + ' ' + afterBrRemains;
+						break;
+				}
+			}
+		}
+		newHtml += oldHtml[i];
+		i++;
+	}
+	newHtml = newHtml.replace(/\n/g, linefeedFormat);
+	return newHtml;
+}
+
+function pProcess(html: string): string {
+	const doc = new JSDOM(html).window.document;
+
+	doc.body.querySelectorAll('p:not(pre p):not(code p)').forEach(p => {
+		let lines = p.innerHTML.split('\n');
+		console.log(lines);
+		// 迭代合并每两个不含`<br\s*\/?>`的行
+		let i = 0;
+		while (i < lines.length - 1) {
+			if (!lines[i].includes('<br') && !lines[i + 1].includes('<br')) {
+				lines[i] += ' ' + lines[i + 1];
+				lines.splice(i + 1, 1);
+			} else {
+				i++;
+			}
+		}
+		p.innerHTML = lines.join('\n');
+	});
+
+	return doc.body.innerHTML;
 }

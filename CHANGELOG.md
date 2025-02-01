@@ -1,5 +1,5 @@
 # Change Log
-## 1.0.8
+## 1.0.9 & 1.0.10
 Fixed comment linewrap settings of JS/TS (<https://github.com/RickoNoNo3/docpanel/issues/1>)
 
 ## 1.0.8
