@@ -1,5 +1,8 @@
 # Change Log
 ## 1.0.8
+Fixed comment linewrap settings of JS/TS (<https://github.com/RickoNoNo3/docpanel/issues/1>)
+
+## 1.0.8
 Updated `contextualTitle`
 
 ## 1.0.7

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import MarkdownIt from 'markdown-it';
 import * as fs from 'fs';
 import * as path from 'path';
+import { JSDOM } from 'jsdom';
 
 /**
  * list of (string, tolerance%)
@@ -60,7 +61,9 @@ export function activate(context: vscode.ExtensionContext) {
 		) { }
 
 		private async initShiki(themeClass: 'light' | 'dark') {
-			this.mit = (await import('markdown-it')).default();
+			this.mit = (await import('markdown-it')).default({
+				breaks: true,
+			});
 			this.shiki = (await import('@shikijs/markdown-it')).default;
 			const shikimit = await this.shiki({
 				theme: {
@@ -198,12 +201,20 @@ export function activate(context: vscode.ExtensionContext) {
 				if (checkStop(mdList[i])) continue;
 				const newHtml = this.mit.render(mdList[i]);
 				if (checkStop(newHtml, true)) continue;
+				console.log(mdList[i], newHtml);
 				source.push(mdList[i]);
 				html += newHtml;
 				// python doc special case
 				html = html.replace(/&lt;!--moduleHash:-{0,1}\d+--&gt;/g, '');
-				// redundant lines
-				html = html.replace(/<p>\s*<\/p>/g, '');
+				const doc = new JSDOM(`<wrapper>${html}</wrapper>`).window.document;
+				doc.body.querySelectorAll('*:not(pre):not(code):not(pre *):not(code *)').forEach(element => {
+					// js doc line breaks special case
+					element.innerHTML = element.innerHTML.replace(/<br\s*\/?>/g, ' ');
+					// redundants
+					element.innerHTML = element.innerHTML.replace(/<p>\s*<\/p>/g, '');
+					element.innerHTML = element.innerHTML.trim();
+				});
+				html = doc.body.innerHTML.replace(/<\/?wrapper>/g, '');
 				html = html.trim();
 				if (i < mdList.length - 1)
 					html += '<hr>';
